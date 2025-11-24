@@ -1,0 +1,97 @@
+#########################
+### GENERAL
+#########################
+
+# Logs
+*.log
+*.tlog
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Lock files
+*.lock
+
+# Ignore secrets (optional)
+*.env
+.env*
+
+#########################
+### .NET / ASP.NET CORE
+#########################
+
+# Build output
+bin/
+obj/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.cache/
+*.dbmdl
+
+# Compiled binaries
+*.dll
+*.exe
+*.pdb
+
+# Database files
+*.mdf
+*.ldf
+*.ndf
+*.sqlite
+
+# Publish output
+publish/
+wwwroot/
+
+#########################
+### ANGULAR
+#########################
+
+# Angular build
+/frontend/dist/
+/frontend/build/
+/frontend/.angular/
+
+# Dependencies
+/frontend/node_modules/
+/frontend/npm-debug.log
+/frontend/yarn-debug.log
+/frontend/yarn-error.log
+
+# Angular cache
+/frontend/.cache/
+/frontend/.eslintcache
+
+# Environment files
+/frontend/src/environments/*.ts
+
+#########################
+### IDEs / EDITORS
+#########################
+
+# VS Code
+.vscode/
+.history/
+
+#########################
+### WINDOWS
+#########################
+
+# Recycle Bin files
+$RECYCLE.BIN/
+
+#########################
+### GIT
+#########################
+
+# Ignore local git config
+.gitconfig
