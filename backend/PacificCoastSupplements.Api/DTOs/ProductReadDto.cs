@@ -7,6 +7,7 @@ namespace PacificCoastSupplements.Api.DTOs
         public string Description { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int Stock { get; set; }
+        public List<ProductVariantReadDto> Variants { get; set; } = new();
         public string CategoryName { get; set; } = string.Empty;
     }
 }

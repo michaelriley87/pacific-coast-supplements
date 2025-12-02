@@ -24,7 +24,15 @@ namespace PacificCoastSupplements.Api.Services
                 Description = p.Description,
                 Price = p.Price,
                 Stock = p.Stock,
-                CategoryName = p.Category?.Name ?? ""
+                CategoryName = p.Category?.Name ?? "",
+                Variants = p.Variants.Select(v => new ProductVariantReadDto
+                {
+                    ProductVariantId = v.ProductVariantId,
+                    Size = v.Size,
+                    Flavor = v.Flavor,
+                    Price = v.Price,
+                    Stock = v.Stock
+                }).ToList()
             }).ToList();
         }
 

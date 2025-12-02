@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace PacificCoastSupplements.Api.Models
 {
     public class Product
@@ -8,6 +10,7 @@ namespace PacificCoastSupplements.Api.Models
         public decimal Price { get; set; }
         public int Stock { get; set; }
         public int CategoryId { get; set; }
-        public Category? Category { get; set; }
+        public Category Category { get; set; } = null!;
+        public List<ProductVariant> Variants { get; set; } = new();
     }
 }
