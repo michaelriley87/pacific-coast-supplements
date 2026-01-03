@@ -1,4 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+using PacificCoastSupplements.Api.Data;
 using PacificCoastSupplements.Api.DTOs;
+using PacificCoastSupplements.Api.Exceptions;
 using PacificCoastSupplements.Api.Interfaces;
 using PacificCoastSupplements.Api.Models;
 
@@ -7,10 +10,12 @@ namespace PacificCoastSupplements.Api.Services
     public class ProductService
     {
         private readonly IProductRepository _repo;
+        private readonly ApplicationDbContext _context;
 
-        public ProductService(IProductRepository repo)
+        public ProductService(IProductRepository repo, ApplicationDbContext context)
         {
             _repo = repo;
+            _context = context;
         }
 
         public async Task<IEnumerable<ProductReadDto>> GetAllAsync()
@@ -22,8 +27,6 @@ namespace PacificCoastSupplements.Api.Services
                 ProductId = p.ProductId,
                 Name = p.Name,
                 Description = p.Description,
-                Price = p.Price,
-                Stock = p.Stock,
                 CategoryName = p.Category?.Name ?? "",
                 Variants = p.Variants.Select(v => new ProductVariantReadDto
                 {
@@ -36,69 +39,116 @@ namespace PacificCoastSupplements.Api.Services
             }).ToList();
         }
 
-        public async Task<ProductReadDto?> GetByIdAsync(int id)
+        public async Task<ProductReadDto> GetByIdAsync(int id)
         {
             var p = await _repo.GetByIdAsync(id);
-            if (p == null) return null;
+            if (p == null)
+                throw new NotFoundException($"Product {id} was not found.");
 
             return new ProductReadDto
             {
                 ProductId = p.ProductId,
                 Name = p.Name,
                 Description = p.Description,
-                Price = p.Price,
-                Stock = p.Stock,
-                CategoryName = p.Category?.Name ?? ""
+                CategoryName = p.Category?.Name ?? "",
+                Variants = p.Variants.Select(v => new ProductVariantReadDto
+                {
+                    ProductVariantId = v.ProductVariantId,
+                    Size = v.Size,
+                    Flavor = v.Flavor,
+                    Price = v.Price,
+                    Stock = v.Stock
+                }).ToList()
             };
         }
 
         public async Task<ProductReadDto> CreateAsync(ProductCreateDto dto)
         {
+            if (dto.Variants == null || dto.Variants.Count == 0)
+                throw new BadRequestException("A product must have at least one variant.");
+
+            if (string.IsNullOrWhiteSpace(dto.Name))
+                throw new BadRequestException("Product name is required.");
+
+            var categoryExists = await _context.Categories.AnyAsync(c => c.CategoryId == dto.CategoryId);
+            if (!categoryExists)
+                throw new BadRequestException($"CategoryId {dto.CategoryId} does not exist.");
+
             var product = new Product
             {
-                Name = dto.Name,
-                Description = dto.Description,
-                Price = dto.Price,
-                Stock = dto.Stock,
+                Name = dto.Name.Trim(),
+                Description = dto.Description?.Trim() ?? string.Empty,
                 CategoryId = dto.CategoryId
             };
 
             await _repo.AddAsync(product);
             await _repo.SaveChangesAsync();
 
-            return new ProductReadDto
+            var variants = dto.Variants.Select(v => new ProductVariant
             {
                 ProductId = product.ProductId,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                Stock = product.Stock,
-                CategoryName = "" // category loaded later
+                Size = v.Size?.Trim() ?? string.Empty,
+                Flavor = v.Flavor?.Trim() ?? string.Empty,
+                Price = v.Price,
+                Stock = v.Stock
+            }).ToList();
+
+            await _context.ProductVariants.AddRangeAsync(variants);
+            await _context.SaveChangesAsync();
+
+            var created = await _repo.GetByIdAsync(product.ProductId);
+            if (created == null)
+                throw new Exception("Failed to reload created product.");
+
+            return new ProductReadDto
+            {
+                ProductId = created.ProductId,
+                Name = created.Name,
+                Description = created.Description,
+                CategoryName = created.Category?.Name ?? "",
+                Variants = created.Variants.Select(v => new ProductVariantReadDto
+                {
+                    ProductVariantId = v.ProductVariantId,
+                    Size = v.Size,
+                    Flavor = v.Flavor,
+                    Price = v.Price,
+                    Stock = v.Stock
+                }).ToList()
             };
         }
 
-        public async Task<bool> UpdateAsync(int id, ProductUpdateDto dto)
+        public async Task UpdateAsync(int id, ProductUpdateDto dto)
         {
             var product = await _repo.GetByIdAsync(id);
-            if (product == null) return false;
+            if (product == null)
+                throw new NotFoundException($"Product {id} was not found.");
 
-            product.Name = dto.Name;
-            product.Description = dto.Description;
-            product.Price = dto.Price;
-            product.Stock = dto.Stock;
+            var categoryExists = await _context.Categories.AnyAsync(c => c.CategoryId == dto.CategoryId);
+            if (!categoryExists)
+                throw new BadRequestException($"CategoryId {dto.CategoryId} does not exist.");
+
+            product.Name = dto.Name.Trim();
+            product.Description = dto.Description?.Trim() ?? string.Empty;
             product.CategoryId = dto.CategoryId;
 
             _repo.Update(product);
-            return await _repo.SaveChangesAsync();
+
+            var saved = await _repo.SaveChangesAsync();
+            if (!saved)
+                throw new Exception("Failed to update product.");
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task DeleteAsync(int id)
         {
             var product = await _repo.GetByIdAsync(id);
-            if (product == null) return false;
+            if (product == null)
+                throw new NotFoundException($"Product {id} was not found.");
 
             _repo.Delete(product);
-            return await _repo.SaveChangesAsync();
+
+            var saved = await _repo.SaveChangesAsync();
+            if (!saved)
+                throw new Exception("Failed to delete product.");
         }
     }
 }

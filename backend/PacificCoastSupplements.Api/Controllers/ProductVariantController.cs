@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PacificCoastSupplements.Api.DTOs;
+using PacificCoastSupplements.Api.Exceptions;
 using PacificCoastSupplements.Api.Services;
 
 namespace PacificCoastSupplements.Api.Controllers
@@ -16,24 +17,29 @@ namespace PacificCoastSupplements.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(ProductVariantCreateDto dto)
+        public async Task<ActionResult<ProductVariantReadDto>> Create([FromBody] ProductVariantCreateDto dto)
         {
+            // Let middleware convert this into ProblemDetails 400
+            if (dto.ProductId is null)
+                throw new BadRequestException("ProductId is required when creating a variant directly.");
+
             var result = await _service.CreateAsync(dto);
             return Ok(result);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, ProductVariantUpdateDto dto)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] ProductVariantUpdateDto dto)
         {
-            var success = await _service.UpdateAsync(id, dto);
-            return success ? NoContent() : NotFound();
+            await _service.UpdateAsync(id, dto);
+            return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var success = await _service.DeleteAsync(id);
-            return success ? NoContent() : NotFound();
+            await _service.DeleteAsync(id);
+            return NoContent();
         }
+
     }
 }

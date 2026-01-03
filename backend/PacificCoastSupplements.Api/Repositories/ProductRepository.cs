@@ -18,6 +18,7 @@ namespace PacificCoastSupplements.Api.Repositories
         {
             return await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Variants)
                 .ToListAsync();
         }
 
@@ -25,6 +26,7 @@ namespace PacificCoastSupplements.Api.Repositories
         {
             return await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Variants)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
         }
 

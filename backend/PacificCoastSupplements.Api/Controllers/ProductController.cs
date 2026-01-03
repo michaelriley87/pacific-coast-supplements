@@ -16,40 +16,37 @@ namespace PacificCoastSupplements.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<ActionResult<List<ProductReadDto>>> GetAll()
         {
             var products = await _service.GetAllAsync();
             return Ok(products);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<ProductReadDto>> GetById(int id)
         {
             var product = await _service.GetByIdAsync(id);
-            if (product == null) return NotFound();
             return Ok(product);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(ProductCreateDto dto)
+        public async Task<ActionResult<ProductReadDto>> Create([FromBody] ProductCreateDto dto)
         {
-            var product = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = product.ProductId }, product);
+            var created = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.ProductId }, created);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, ProductUpdateDto dto)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
         {
-            var success = await _service.UpdateAsync(id, dto);
-            if (!success) return NotFound();
+            await _service.UpdateAsync(id, dto);
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var success = await _service.DeleteAsync(id);
-            if (!success) return NotFound();
+            await _service.DeleteAsync(id);
             return NoContent();
         }
     }
