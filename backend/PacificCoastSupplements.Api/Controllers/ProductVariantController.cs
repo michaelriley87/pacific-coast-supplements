@@ -19,7 +19,6 @@ namespace PacificCoastSupplements.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<ProductVariantReadDto>> Create([FromBody] ProductVariantCreateDto dto)
         {
-            // Let middleware convert this into ProblemDetails 400
             if (dto.ProductId is null)
                 throw new BadRequestException("ProductId is required when creating a variant directly.");
 
